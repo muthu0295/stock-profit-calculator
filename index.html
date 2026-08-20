@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Profit & Loss Calculator</title>
+  <style>
+    /* Reset & CSS Variables */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    :root {
+      --bg-color: #090d16;
+      --card-bg: #111827;
+      --panel-bg: #030712;
+      --border-color: #1f2937;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent-indigo: #6366f1;
+      --accent-indigo-hover: #4f46e5;
+      --profit-color: #10b981;
+      --profit-bg: rgba(16, 185, 129, 0.1);
+      --profit-border: rgba(16, 185, 129, 0.3);
+      --loss-color: #ef4444;
+      --loss-bg: rgba(239, 68, 68, 0.1);
+      --loss-border: rgba(239, 68, 68, 0.3);
+      --neutral-bg: rgba(31, 41, 55, 0.5);
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* Main Container */
+    .calculator-card {
+      width: 100%;
+      max-width: 950px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 850px) {
+      .calculator-card {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    /* Section Layouts */
+    .input-section {
+      padding: 30px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    @media (min-width: 850px) {
+      .input-section {
+        border-bottom: none;
+        border-right: 1px solid var(--border-color);
+      }
+    }
+
+    .output-section {
+      padding: 30px;
+      background-color: var(--panel-bg);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+
+    .reset-btn {
+      background-color: var(--border-color);
+      color: var(--text-muted);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .reset-btn:hover {
+      background-color: #374151;
+      color: var(--text-main);
+    }
+
+    /* Trade Type Switcher */
+    .trade-type-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background-color: var(--panel-bg);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+
+    .trade-type-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .trade-type-btn.active {
+      background-color: var(--accent-indigo);
+      color: #ffffff;
+    }
+
+    /* Form Inputs */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--accent-indigo);
+    }
+
+    .error-text {
+      color: var(--loss-color);
+      font-size: 0.75rem;
+      margin-top: 4px;
+      display: none;
+    }
+
+    /* Margin Container */
+    .margin-container {
+      background-color: rgba(99, 102, 241, 0.05);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      padding: 14px;
+      border-radius: 12px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .margin-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .margin-btn {
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .margin-btn.active {
+      background-color: var(--accent-indigo);
+      color: #ffffff;
+      border-color: var(--accent-indigo);
+    }
+
+    /* Results Dashboard */
+    .results-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .main-pnl-card {
+      padding: 20px;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      background-color: var(--neutral-bg);
+      margin-bottom: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .pnl-badge-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .pnl-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      background-color: var(--border-color);
+      color: var(--text-muted);
+    }
+
+    .pnl-amount {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .roi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .roi-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .roi-value {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    /* Breakdown Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .metric-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 12px 14px;
+      border-radius: 12px;
+    }
+
+    .metric-card.full-width {
+      grid-column: span 2;
+      background-color: rgba(99, 102, 241, 0.08);
+      border-color: rgba(99, 102, 241, 0.2);
+    }
+
+    .metric-card p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .metric-card h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* State-based Styles */
+    .profit-state {
+      background-color: var(--profit-bg);
+      border-color: var(--profit-border);
+      color: var(--profit-color);
+    }
+
+    .profit-state .pnl-badge {
+      background-color: rgba(16, 185, 129, 0.2);
+      color: var(--profit-color);
+    }
+
+    .loss-state {
+      background-color: var(--loss-bg);
+      border-color: var(--loss-border);
+      color: var(--loss-color);
+    }
+
+    .loss-state .pnl-badge {
+      background-color: rgba(239, 68, 68, 0.2);
+      color: var(--loss-color);
+    }
+
+    .footer-note {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="calculator-card">
+    <!-- LEFT PANEL: INPUTS -->
+    <div class="input-section">
+      <div class="header">
+        <h1>Stock Calculator</h1>
+        <button class="reset-btn" id="resetBtn">Reset</button>
+      </div>
+
+      <!-- Trade Type Toggle -->
+      <div class="trade-type-group">
+        <button class="trade-type-btn active" id="btnDelivery" onclick="setTradeType('delivery')">Delivery (1x)</button>
+        <button class="trade-type-btn" id="btnIntraday" onclick="setTradeType('intraday')">Intraday (Margin)</button>
+      </div>
+
+      <!-- Form Inputs -->
+      <div class="form-group">
+        <label for="buyValue">Buy Price (₹)</label>
+        <input type="number" id="buyValue" placeholder="0.00" step="any" value="100">
+        <div class="error-text" id="buyError">Price must be greater than 0</div>
+      </div>
+
+      <div class="form-group">
+        <label for="sellValue">Sell Price (₹)</label>
+        <input type="number" id="sellValue" placeholder="0.00" step="any" value="115">
+        <div class="error-text" id="sellError">Price must be greater than 0</div>
+      </div>
+
+      <div class="form-group">
+        <label for="shareCount">Quantity (Share Count)</label>
+        <input type="number" id="shareCount" placeholder="0" step="1" value="50">
+        <div class="error-text" id="countError">Quantity must be a positive integer</div>
+      </div>
+
+      <!-- Intraday Margin Options -->
+      <div class="margin-container" id="marginContainer">
+        <label>Margin Multiplier</label>
+        <div class="margin-buttons">
+          <button class="margin-btn" onclick="setMargin('2')">2x</button>
+          <button class="margin-btn" onclick="setMargin('3.3')">3.3x</button>
+          <button class="margin-btn active" id="defaultMarginBtn" onclick="setMargin('5')">5x</button>
+          <input type="number" id="marginInput" placeholder="Custom" step="any" value="5" style="padding: 4px; text-align: center; font-size: 0.8rem;">
+        </div>
+        <div class="error-text" id="marginError">Margin must be greater than 0</div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: OUTPUTS -->
+    <div class="output-section">
+      <div>
+        <div class="results-title">Calculation Summary</div>
+
+        <!-- Main Output Card -->
+        <div class="main-pnl-card" id="mainPnlCard">
+          <div class="pnl-badge-row">
+            <span style="font-size: 0.85rem; font-weight: 500;">Profit / Loss Amount</span>
+            <span class="pnl-badge" id="pnlBadge">Neutral</span>
+          </div>
+
+          <div class="pnl-amount" id="pnlAmount">₹0.00</div>
+
+          <div class="roi-grid">
+            <div>
+              <div class="roi-label">Standard ROI</div>
+              <div class="roi-value" id="standardRoi">—</div>
+            </div>
+            <div id="marginRoiGroup" style="display: none;">
+              <div class="roi-label" id="marginRoiLabel">Margin ROI (5x)</div>
+              <div class="roi-value" id="marginRoi">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Breakdown Details Grid -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <p>Total Buy Value</p>
+            <h3 id="investedAmount">₹0.00</h3>
+          </div>
+
+          <div class="metric-card">
+            <p>Total Sell Value</p>
+            <h3 id="returnsAmount">₹0.00</h3>
+          </div>
+
+          <div class="metric-card full-width" id="marginCapitalCard" style="display: none;">
+            <p style="color: var(--accent-indigo);">Required Margin Capital</p>
+            <h3 id="intradayInvested">₹0.00</h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-note">
+        Calculations are real-time estimations excluding brokerages and taxes.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // App State
+    let tradeType = 'delivery';
+
+    // DOM Elements
+    const buyInput = document.getElementById('buyValue');
+    const sellInput = document.getElementById('sellValue');
+    const countInput = document.getElementById('shareCount');
+    const marginInput = document.getElementById('marginInput');
+
+    const marginContainer = document.getElementById('marginContainer');
+    const marginCapitalCard = document.getElementById('marginCapitalCard');
+    const marginRoiGroup = document.getElementById('marginRoiGroup');
+    const marginRoiLabel = document.getElementById('marginRoiLabel');
+
+    const pnlAmountEl = document.getElementById('pnlAmount');
+    const pnlBadgeEl = document.getElementById('pnlBadge');
+    const mainPnlCard = document.getElementById('mainPnlCard');
+    const standardRoiEl = document.getElementById('standardRoi');
+    const marginRoiEl = document.getElementById('marginRoi');
+    const investedAmountEl = document.getElementById('investedAmount');
+    const returnsAmountEl = document.getElementById('returnsAmount');
+    const intradayInvestedEl = document.getElementById('intradayInvested');
+
+    // Error Elements
+    const buyError = document.getElementById('buyError');
+    const sellError = document.getElementById('sellError');
+    const countError = document.getElementById('countError');
+    const marginError = document.getElementById('marginError');
+
+    // Attach Event Listeners
+    [buyInput, sellInput, countInput, marginInput].forEach(input => {
+      input.addEventListener('input', calculatePnL);
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', resetCalculator);
+
+    function setTradeType(type) {
+      tradeType = type;
+      document.getElementById('btnDelivery').classList.toggle('active', type === 'delivery');
+      document.getElementById('btnIntraday').classList.toggle('active', type === 'intraday');
+
+      if (type === 'intraday') {
+        marginContainer.style.display = 'block';
+        marginCapitalCard.style.display = 'block';
+        marginRoiGroup.style.display = 'block';
+      } else {
+        marginContainer.style.display = 'none';
+        marginCapitalCard.style.display = 'none';
+        marginRoiGroup.style.display = 'none';
+      }
+      calculatePnL();
+    }
+
+    function setMargin(value) {
+      marginInput.value = value;
+      document.querySelectorAll('.margin-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.innerText === value + 'x');
+      });
+      calculatePnL();
+    }
+
+    function validateInputs() {
+      let isValid = true;
+
+      const buy = parseFloat(buyInput.value);
+      const sell = parseFloat(sellInput.value);
+      const count = parseFloat(countInput.value);
+      const margin = parseFloat(marginInput.value);
+
+      // Buy Validation
+      if (buyInput.value !== '' && (isNaN(buy) || buy <= 0)) {
+        buyError.style.display = 'block';
+        isValid = false;
+      } else {
+        buyError.style.display = 'none';
+      }
+
+      // Sell Validation
+      if (sellInput.value !== '' && (isNaN(sell) || sell <= 0)) {
+        sellError.style.display = 'block';
+        isValid = false;
+      } else {
+        sellError.style.display = 'none';
+      }
+
+      // Count Validation
+      if (countInput.value !== '') {
+        if (isNaN(count) || count <= 0 || !Number.isInteger(count)) {
+          countError.style.display = 'block';
+          isValid = false;
+        } else {
+          countError.style.display = 'none';
+        }
+      }
+
+      // Margin Validation
+      if (tradeType === 'intraday' && marginInput.value !== '') {
+        if (isNaN(margin) || margin <= 0) {
+          marginError.style.display = 'block';
+          isValid = false;
+        } else {
+          marginError.style.display = 'none';
+        }
+      }
+
+      if (!buyInput.value || !sellInput.value || !countInput.value) {
+        isValid = false;
+      }
+
+      return isValid;
+    }
+
+    function calculatePnL() {
+      const isValid = validateInputs();
+
+      if (!isValid) {
+        pnlAmountEl.innerText = '₹0.00';
+        pnlBadgeEl.innerText = 'Neutral';
+        mainPnlCard.className = 'main-pnl-card';
+        standardRoiEl.innerText = '—';
+        marginRoiEl.innerText = '—';
+        investedAmountEl.innerText = '₹0.00';
+        returnsAmountEl.innerText = '₹0.00';
+        intradayInvestedEl.innerText = '₹0.00';
+        return;
+      }
+
+      const buy = parseFloat(buyInput.value);
+      const sell = parseFloat(sellInput.value);
+      const count = parseFloat(countInput.value);
+      const margin = parseFloat(marginInput.value) || 1;
+
+      const investedAmount = buy * count;
+      const returnsAmount = sell * count;
+      const pnlAmount = returnsAmount - investedAmount;
+      const pnlPercentage = (pnlAmount / investedAmount) * 100;
+
+      const intradayInvested = investedAmount / margin;
+      const intradayPnlPercentage = (pnlAmount / intradayInvested) * 100;
+
+      // Update Text Outputs
+      pnlAmountEl.innerText = formatCurrency(pnlAmount);
+      investedAmountEl.innerText = formatCurrency(investedAmount);
+      returnsAmountEl.innerText = formatCurrency(returnsAmount);
+      intradayInvestedEl.innerText = formatCurrency(intradayInvested);
+
+      standardRoiEl.innerText = formatPercent(pnlPercentage);
+      marginRoiEl.innerText = formatPercent(intradayPnlPercentage);
+      marginRoiLabel.innerText = `Margin ROI (₹{margin}x)`;
+
+      // Update Visual Badges and Styles
+      if (pnlAmount > 0) {
+        mainPnlCard.className = 'main-pnl-card profit-state';
+        pnlBadgeEl.innerText = 'Profit';
+      } else if (pnlAmount < 0) {
+        mainPnlCard.className = 'main-pnl-card loss-state';
+        pnlBadgeEl.innerText = 'Loss';
+      } else {
+        mainPnlCard.className = 'main-pnl-card';
+        pnlBadgeEl.innerText = 'Neutral';
+      }
+    }
+
+    function formatCurrency(val) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 2
+      }).format(val);
+    }
+
+    function formatPercent(val) {
+      const prefix = val > 0 ? '+' : '';
+      return `${prefix}${val.toFixed(2)}%`;
+    }
+
+    function resetCalculator() {
+      buyInput.value = '';
+      sellInput.value = '';
+      countInput.value = '';
+      marginInput.value = '5';
+      setTradeType('delivery');
+      calculatePnL();
+    }
+
+    // Initial Calculation Pass
+    calculatePnL();
+  </script>
+</body>
+</html>
